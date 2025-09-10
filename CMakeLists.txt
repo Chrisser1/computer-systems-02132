@@ -12,6 +12,10 @@ include_directories(src)
 
 add_executable(cell-detection
         src/main.c
+        src/image_processing.c
+        src/image_processing.h
+        src/cbmp.c
+        src/cbmp.h
 )
 
 target_include_directories(cell-detection PRIVATE
