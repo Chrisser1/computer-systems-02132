@@ -17,7 +17,6 @@
 
 unsigned char rgb_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS];
 unsigned char grayscale_image[BMP_WIDTH][BMP_HEIGHT];
-unsigned char working_on_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS];
 unsigned char final_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS];
 
 int main(int argc, char** argv) {
@@ -37,23 +36,18 @@ int main(int argc, char** argv) {
     convert_to_grayscale(rgb_image, grayscale_image);
     binary_threshold(grayscale_image, 90);
 
-    int counter = 0;
-    char name[100];
+    unsigned int counter = 0;
     Cell_list* cell_list = create_cell_list();
     while (erode_image(grayscale_image)) {
-        detect_cells(grayscale_image, 8, 2, cell_list);
-        convert_to_RGB(grayscale_image, working_on_image);
-        memcpy(final_image, working_on_image, BMP_WIDTH * BMP_HEIGHT * BMP_CHANNELS);
-        draw_points(final_image, cell_list);
-        sprintf(name, "output/result%i.bmp", counter);
-        write_bitmap(final_image, name);
-        counter++;
+        counter += detect_cells(grayscale_image, 14, 1, cell_list);
     }
-    printf("Drew %d points", cell_list->cell_amount);
-    destroy_cell_list(cell_list);
+    printf("Amount of times eroded: %d\n", counter);
 
-    printf("Amount of times eroded %d \n", counter);
-    //
-    // convert_to_RGB(grayscale_image, final_image);
-    // write_bitmap(final_image, argv[2]);sprintf
+    draw_points(rgb_image, cell_list);
+    printf("Drew %d points \n", cell_list->cell_amount);
+    destroy_cell_list(cell_list);
+    end = clock();
+    cpu_time_used = end - start;
+    printf("Time used: %f \n", cpu_time_used);
+    write_bitmap(rgb_image, argv[2]);
 }

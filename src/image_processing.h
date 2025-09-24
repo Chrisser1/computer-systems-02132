@@ -99,6 +99,29 @@ static bool is_exclusion_frame_clear(unsigned char input_image[BMP_WIDTH][BMP_HE
                                      int exclusion_frame_thickness, int center_x, int center_y);
 
 /**
+ * @brief Checks if the inner detection area contains at least one white pixel.
+ *
+ * @param image The binary image.
+ * @param detection_area_size The size of the detection area.
+ * @param center_x The center x-coordinate of the detection window.
+ * @param center_y The center y-coordinate of the detection window.
+ * @return True if at least one white pixel is found, false otherwise.
+ */
+static bool is_detection_area_active(unsigned char image[BMP_WIDTH][BMP_HEIGHT], int detection_area_size,
+                                     int center_x, int center_y);
+
+/**
+ * @brief Sets all pixels in the detection area to black.
+ *
+ * @param image The binary image to modify.
+ * @param detection_area_size The detection area size.
+ * @param center_x The center x-coordinate of the area to clear.
+ * @param center_y The center y-coordinate of the area to clear.
+ */
+static void clear_detection_area(unsigned char image[BMP_WIDTH][BMP_HEIGHT], int detection_area_size,
+                                 int center_x, int center_y);
+
+/**
  *
  * @param input_image
  * @param detection_area_size

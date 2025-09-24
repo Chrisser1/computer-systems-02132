@@ -158,30 +158,59 @@ bool is_exclusion_frame_clear(unsigned char input_image[950][950], const int det
     return true;
 }
 
-unsigned int detect_cells(unsigned char input_image[950][950], const int detection_area_size,
-                          const int exclusion_frame_thickness, Cell_list *cell_list) {
-    unsigned int counter = 0;
-    if (exclusion_frame_thickness > detection_area_size / 2) {
-        fprintf(stderr, "ERROR: exclusion frame to big in comparison to detection");
-        return 0;
-    }
+static bool is_detection_area_active(unsigned char image[BMP_WIDTH][BMP_HEIGHT], const int detection_area_size,
+    const int center_x, const int center_y) {
+    assert(detection_area_size % 2 == 0); // Dete
+    const int half_size = detection_area_size / 2;
 
+    for (int i = -half_size; i < half_size; i++) {
+        for (int j = -half_size; j < half_size; j++) {
+            const int x = center_x + i;
+            const int y = center_y + j;
+            if (is_valid_coordinate(x, y) && image[x][y] == 255) {
+                return true; // Found a white pixel!
+            }
+        }
+    }
+    return false; // No white pixels found.
+}
+
+static void clear_detection_area(unsigned char image[BMP_WIDTH][BMP_HEIGHT], const int detection_area_size,
+    const int center_x, const int center_y) {
+    assert(detection_area_size % 2 == 0); // Must be a multiple of two
+    const int half_size = detection_area_size / 2;
+    for (int i = -half_size; i < half_size; i++) {
+        for (int j = -half_size; j < half_size; j++) {
+            const int x = center_x + i;
+            const int y = center_y + j;
+            if (is_valid_coordinate(x, y)) {
+                image[x][y] = 0;
+            }
+        }
+    }
+}
+
+unsigned int detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], const int detection_area_size,
+    const int exclusion_frame_thickness, Cell_list *cell_list) {
+    unsigned int counter = 0;
     for (int x = 0; x < BMP_WIDTH; x++) {
         for (int y = 0; y < BMP_HEIGHT; y++) {
-            if (input_image[x][y] == 255) {
-                // The exclusion frame must be all black.
-                if (is_exclusion_frame_clear(input_image, detection_area_size, exclusion_frame_thickness, x, y)) {
-                    counter++;
-                    for (int i = -detection_area_size; i < detection_area_size; i++) {
-                        for (int j = -detection_area_size; j < detection_area_size; j++) {
-                            input_image[x + i][y + j] = 0;
-                        }
-                    }
+            // The exclusion frame must be all black.
+            if (is_exclusion_frame_clear(input_image, detection_area_size, exclusion_frame_thickness, x, y)) {
+
+                // The inner detection area must contain at least one white pixel.
+                if (is_detection_area_active(input_image, detection_area_size, x, y)) {
+                    // Store its coordinates
                     add_to_cell_list(cell_list, x, y);
+                    counter++;
+
+                    // Clear the area to prevent detecting the same cell again
+                    clear_detection_area(input_image, detection_area_size, x, y);
                 }
             }
         }
     }
+
     return counter;
 }
 
