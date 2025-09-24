@@ -203,7 +203,7 @@ unsigned int detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], cons
             if (is_exclusion_frame_clear(input_image, detection_area_size, exclusion_frame_thickness, x, y)) {
 
                 // The inner detection area must contain at least one white pixel.
-                if (is_detection_area_active(input_image, detection_area_size, x, y)) {
+                if (input_image[x][y] || is_detection_area_active(input_image, detection_area_size, x, y)) {
                     // Store its coordinates
                     add_to_cell_list(cell_list, x, y);
                     counter++;
