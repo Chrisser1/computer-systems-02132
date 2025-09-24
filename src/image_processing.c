@@ -139,22 +139,23 @@ void destroy_cell_list(Cell_list* cell_list) {
 
 bool is_exclusion_frame_clear(unsigned char input_image[950][950], const int detection_area_size,
     const int exclusion_frame_thickness, const int center_x, const int center_y) {
+    const int half_size = (detection_area_size / 2) + exclusion_frame_thickness;
 
-    for (int j = 0; j < detection_area_size; j++) {
-        for (int i = -exclusion_frame_thickness + j; i < exclusion_frame_thickness - j; i++) {
-            if (is_valid_coordinate(center_x + i, center_y - exclusion_frame_thickness)
-                && input_image[center_x + i][center_y - exclusion_frame_thickness]) return false;
+    for (int i = -half_size; i < half_size; i++) {
+        for (int j = -half_size; j < half_size; j++) {
+            // Check if the current pixel is on the frame's border
+            if (i == -half_size || i == half_size - 1 || j == -half_size || j == half_size - 1) {
+                const int x = center_x + i;
+                const int y = center_y + j;
 
-            if (is_valid_coordinate(center_x + i, center_y + exclusion_frame_thickness)
-                && input_image[center_x + i][center_y + exclusion_frame_thickness]) return false;
-
-            if (is_valid_coordinate(center_x - exclusion_frame_thickness, center_y + i)
-                && input_image[center_x - exclusion_frame_thickness][center_y + i]) return false;
-
-            if (is_valid_coordinate(center_x + exclusion_frame_thickness, center_y + i)
-                && input_image[center_x + exclusion_frame_thickness][center_y + i]) return false;
+                // If the coordinate is valid AND the pixel is white, the frame is not clear.
+                if (is_valid_coordinate(x, y) && input_image[x][y] == 255) {
+                    return false;
+                }
+            }
         }
     }
+    // If we looped through the whole frame and found no white pixels, it's clear.
     return true;
 }
 
@@ -228,6 +229,12 @@ void draw_points(unsigned char input_image[950][950][3], Cell_list *cell_list) {
             input_image[x + i][y][0] = 255;
             input_image[x + i][y + 1][0] = 255;
             input_image[x + i][y - 1][0] = 255;
+            input_image[x + i][y][1] = 0;
+            input_image[x + i][y + 1][1] = 0;
+            input_image[x + i][y - 1][1] = 0;
+            input_image[x + i][y][2] = 0;
+            input_image[x + i][y + 1][2] = 0;
+            input_image[x + i][y - 1][2] = 0;
 
             // Draw on y-axis
             if (!is_valid_coordinate(x, y + i) && !is_valid_coordinate(x + 1, y + i)
@@ -237,6 +244,12 @@ void draw_points(unsigned char input_image[950][950][3], Cell_list *cell_list) {
             input_image[x][y + i][0] = 255;
             input_image[x + 1][y + i][0] = 255;
             input_image[x - 1][y + i][0] = 255;
+            input_image[x][y + i][1] = 0;
+            input_image[x + 1][y + i][1] = 0;
+            input_image[x - 1][y + i][1] = 0;
+            input_image[x][y + i][2] = 0;
+            input_image[x + 1][y + i][2] = 0;
+            input_image[x - 1][y + i][2] = 0;
         }
         current = current->next;
     }
