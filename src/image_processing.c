@@ -139,18 +139,21 @@ void destroy_cell_list(Cell_list* cell_list) {
 
 bool is_exclusion_frame_clear(unsigned char input_image[950][950], const int detection_area_size,
     const int exclusion_frame_thickness, const int center_x, const int center_y) {
-    const int half_size = (detection_area_size / 2) + exclusion_frame_thickness;
 
-    for (int i = -half_size; i < half_size; i++) {
-        for (int j = -half_size; j < half_size; j++) {
-            // Check if the current pixel is on the frame's border
-            if (i == -half_size || i == half_size - 1 || j == -half_size || j == half_size - 1) {
-                const int x = center_x + i;
-                const int y = center_y + j;
+    for (int thickness = 0; thickness <= exclusion_frame_thickness; thickness++) {
+        const int half_size = (detection_area_size / 2) + thickness;
 
-                // If the coordinate is valid AND the pixel is white, the frame is not clear.
-                if (is_valid_coordinate(x, y) && input_image[x][y] == 255) {
-                    return false;
+        for (int i = -half_size; i < half_size; i++) {
+            for (int j = -half_size; j < half_size; j++) {
+                // Check if the current pixel is on the frame's border
+                if (i == -half_size || i == half_size - 1 || j == -half_size || j == half_size - 1) {
+                    const int x = center_x + i;
+                    const int y = center_y + j;
+
+                    // If the coordinate is valid AND the pixel is white, the frame is not clear.
+                    if (is_valid_coordinate(x, y) && input_image[x][y] == 255) {
+                        return false;
+                    }
                 }
             }
         }

@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     unsigned int counter = 0;
     Cell_list* cell_list = create_cell_list();
     while (erode_image(grayscale_image)) {
-        counter += detect_cells(grayscale_image, 14, 1, cell_list);
+        counter += detect_cells(grayscale_image, 12, 1, cell_list);
     }
     printf("Amount of times eroded: %d\n", counter);
 
