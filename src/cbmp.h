@@ -1,7 +1,3 @@
-//
-// Created by chris on 9/10/25.
-//
-
 #ifndef OS_CHALLENGE_CBMP_H
 #define OS_CHALLENGE_CBMP_H
 

@@ -1,17 +1,214 @@
-//
-// Created by chris on 9/10/25.
-//
-
 #include "image_processing.h"
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /**
  * @brief Checks if a given coordinate is within the image boundaries.
  * @return True if the coordinate is valid, false otherwise.
  */
-static bool _is_valid_coordinate(const int x, const int y) {
+static bool is_valid_coordinate(const int x, const int y) {
     return x >= 0 && x < BMP_WIDTH && y >= 0 && y < BMP_HEIGHT;
+}
+
+void convert_to_grayscale(unsigned char input_image[950][950][3], unsigned char output_image[950][950]) {
+    for (int i = 0; i < BMP_WIDTH; i++) {
+        for (int j = 0; j < BMP_HEIGHT; j++) {
+            // R: input_image[i][j][0]
+            // G: input_image[i][j][1]
+            // B: input_image[i][j][2]
+            output_image[i][j] = (input_image[i][j][0] + input_image[i][j][1] + input_image[i][j][2]) / 3;
+        }
+    }
+}
+
+void convert_to_RGB(unsigned char input_image[950][950], unsigned char output_image[950][950][3]) {
+    for (int x = 0; x < BMP_WIDTH; x++) {
+        for (int y = 0; y < BMP_HEIGHT; y++) {
+            output_image[x][y][0] = input_image[x][y];
+            output_image[x][y][1] = input_image[x][y];
+            output_image[x][y][2] = input_image[x][y];
+        }
+    }
+}
+
+void binary_threshold(unsigned char input_image[950][950], const int threshold) {
+    for (int i = 0; i < BMP_WIDTH; i++) {
+        for (int j = 0; j < BMP_HEIGHT; j++) {
+            if (input_image[i][j] > threshold) {
+                input_image[i][j] = 255;
+            } else {
+                input_image[i][j] = 0;
+            }
+        }
+    }
+}
+
+static bool should_pixel_erode(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], const int x, const int y) {
+    if (is_valid_coordinate(x-1, y) && input_image[x-1][y] == 0) {
+        return true;
+    }
+    if (is_valid_coordinate(x+1, y) && input_image[x+1][y] == 0) {
+        return true;
+    }
+    if (is_valid_coordinate(x, y-1) && input_image[x][y-1] == 0) {
+        return true;
+    }
+    if (is_valid_coordinate(x, y+1) && input_image[x][y+1] == 0) {
+        return true;
+    }
+    return false;
+}
+
+bool erode_image(unsigned char input_image[950][950]) {
+    unsigned char output_image[BMP_WIDTH][BMP_HEIGHT];
+    // Write everything from the input to the output
+    memcpy(output_image, input_image, BMP_WIDTH * BMP_HEIGHT);
+
+    bool has_eroded = false;
+    for (int x = 0; x < BMP_WIDTH; x++) {
+        for (int y = 0; y < BMP_HEIGHT; y++) {
+            if (input_image[x][y] == 255 && should_pixel_erode(input_image, x, y)) {
+                output_image[x][y] = 0;
+                has_eroded = true;
+            }
+        }
+    }
+    // Write everything from the output to input
+    memcpy(input_image, output_image, BMP_WIDTH * BMP_HEIGHT);
+    return has_eroded;
+}
+
+Cell_list* create_cell_list() {
+    Cell_list* cell_list = malloc(sizeof(Cell_list));
+
+    if (cell_list == NULL) {
+        fprintf(stderr, "Failed to allocate cell list\n");
+        return NULL;
+    }
+
+    cell_list->head = NULL;
+    cell_list->cell_amount = 0;
+    return cell_list;
+}
+
+void add_to_cell_list(Cell_list *list, const int x, const int y) {
+    if (list == NULL) {
+        fprintf(stderr, "ERROR: The list does not exist.\n");
+        return;
+    }
+
+    Cell* new_cell = (Cell*)malloc(sizeof(Cell));
+    if (new_cell == NULL) {
+        fprintf(stderr, "Error: Could not allocate memory for a new cell.\n");
+        return;
+    }
+    new_cell->x = x;
+    new_cell->y = y;
+
+    // Assign the current header to the new cell
+    new_cell->next = list->head;
+    // Set the new cell to be the head of the list
+    list->head = new_cell;
+    list->cell_amount++;
+}
+
+void destroy_cell_list(Cell_list* cell_list) {
+    if (cell_list == NULL) {
+        return;
+    }
+
+    Cell* current = cell_list->head;
+    Cell* next;
+
+    // Free all the cells from the list
+    while (current) {
+        // Save the next cell to next
+        next = current->next;
+        // Free the current cell
+        free(current);
+        // Assign the next cell to be the new current
+        current = next;
+    }
+
+    free(cell_list);
+}
+
+bool is_exclusion_frame_clear(unsigned char input_image[950][950], const int detection_area_size,
+    const int exclusion_frame_thickness, const int center_x, const int center_y) {
+
+    for (int j = 0; j < detection_area_size; j++) {
+        for (int i = -exclusion_frame_thickness + j; i < exclusion_frame_thickness - j; i++) {
+            if (is_valid_coordinate(center_x + i, center_y - exclusion_frame_thickness)
+                && input_image[center_x + i][center_y - exclusion_frame_thickness]) return false;
+
+            if (is_valid_coordinate(center_x + i, center_y + exclusion_frame_thickness)
+                && input_image[center_x + i][center_y + exclusion_frame_thickness]) return false;
+
+            if (is_valid_coordinate(center_x - exclusion_frame_thickness, center_y + i)
+                && input_image[center_x - exclusion_frame_thickness][center_y + i]) return false;
+
+            if (is_valid_coordinate(center_x + exclusion_frame_thickness, center_y + i)
+                && input_image[center_x + exclusion_frame_thickness][center_y + i]) return false;
+        }
+    }
+    return true;
+}
+
+unsigned int detect_cells(unsigned char input_image[950][950], const int detection_area_size,
+                          const int exclusion_frame_thickness, Cell_list *cell_list) {
+    unsigned int counter = 0;
+    if (exclusion_frame_thickness > detection_area_size / 2) {
+        fprintf(stderr, "ERROR: exclusion frame to big in comparison to detection");
+        return 0;
+    }
+
+    for (int x = 0; x < BMP_WIDTH; x++) {
+        for (int y = 0; y < BMP_HEIGHT; y++) {
+            if (input_image[x][y] == 255) {
+                // The exclusion frame must be all black.
+                if (is_exclusion_frame_clear(input_image, detection_area_size, exclusion_frame_thickness, x, y)) {
+                    counter++;
+                    for (int i = -detection_area_size; i < detection_area_size; i++) {
+                        for (int j = -detection_area_size; j < detection_area_size; j++) {
+                            input_image[x + i][y + j] = 0;
+                        }
+                    }
+                    add_to_cell_list(cell_list, x, y);
+                }
+            }
+        }
+    }
+    return counter;
+}
+
+void draw_points(unsigned char input_image[950][950][3], Cell_list *cell_list) {
+    Cell *current = cell_list->head;
+    while (current) {
+        const int x = current->x;
+        const int y = current->y;
+        for (int i = -10; i < 10; ++i) {
+            // Draw on x-axis
+            if (!is_valid_coordinate(x + i, y) && !is_valid_coordinate(x+i, y + 1)
+                && !is_valid_coordinate(x + i, y - 1)) {
+                continue;
+            }
+            input_image[x + i][y][0] = 255;
+            input_image[x + i][y + 1][0] = 255;
+            input_image[x + i][y - 1][0] = 255;
+
+            // Draw on y-axis
+            if (!is_valid_coordinate(x, y + i) && !is_valid_coordinate(x + 1, y + i)
+                && !is_valid_coordinate(x - 1, y + i)) {
+                continue;
+            }
+            input_image[x][y + i][0] = 255;
+            input_image[x + 1][y + i][0] = 255;
+            input_image[x - 1][y + i][0] = 255;
+        }
+        current = current->next;
+    }
 }
