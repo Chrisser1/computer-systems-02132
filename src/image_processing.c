@@ -74,10 +74,10 @@ unsigned char otsu_threshold_value(unsigned char input_image[BMP_WIDTH][BMP_HEIG
         if (b_sum == 0 || f_sum == 0) {
             continue;
         }
-        const double mu_b = mu_b_sum / b_sum;;
-        const double mu_f = mu_f_sum / f_sum;
+        const double mu_b = (double)mu_b_sum / b_sum;;
+        const double mu_f = (double)mu_f_sum / f_sum;
 
-        const double otsu = W_b * W_f * ((mu_b - mu_f) * (mu_b - mu_f));
+        const double otsu = W_b * W_f * (double)((mu_b - mu_f) * (mu_b - mu_f));
 
         if (best_otsu < otsu) {
             best_otsu = otsu;
