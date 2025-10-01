@@ -15,7 +15,7 @@ static bool is_valid_coordinate(const int x, const int y) {
     return x >= 0 && x < BMP_WIDTH && y >= 0 && y < BMP_HEIGHT;
 }
 
-void convert_to_grayscale(unsigned char input_image[950][950][3], unsigned char output_image[950][950]) {
+void convert_to_grayscale(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS], unsigned char output_image[BMP_WIDTH][BMP_HEIGHT]) {
     for (int i = 0; i < BMP_WIDTH; i++) {
         for (int j = 0; j < BMP_HEIGHT; j++) {
             // R: input_image[i][j][0]
@@ -26,7 +26,7 @@ void convert_to_grayscale(unsigned char input_image[950][950][3], unsigned char 
     }
 }
 
-void convert_to_RGB(unsigned char input_image[950][950], unsigned char output_image[950][950][3]) {
+void convert_to_RGB(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], unsigned char output_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS]) {
     for (int x = 0; x < BMP_WIDTH; x++) {
         for (int y = 0; y < BMP_HEIGHT; y++) {
             output_image[x][y][0] = input_image[x][y];
@@ -36,9 +36,89 @@ void convert_to_RGB(unsigned char input_image[950][950], unsigned char output_im
     }
 }
 
+void apply_convolution(unsigned char image[BMP_WIDTH][BMP_HEIGHT],
+                       const int* kernel, const int kernel_size) {
+    // A convolution kernel must have an odd size
+    if (kernel_size % 2 == 0) {
+        printf("Error: Kernel size must be odd.\n");
+        return;
+    }
+
+    // Calculate the radius from the kernel size
+    const int radius = kernel_size / 2;
+
+    // Calculate the divisor by summing all kernel elements
+    int divisor = 0;
+    for (int i = 0; i < kernel_size * kernel_size; ++i) {
+        divisor += kernel[i];
+    }
+    // Prevent division by zero
+    if (divisor == 0) {
+        divisor = 1;
+    }
+
+    unsigned char output_image[BMP_WIDTH][BMP_HEIGHT];
+
+    // Main loops now use the radius for border handling
+    for (int x = radius; x < BMP_WIDTH - radius; x++) {
+        for (int y = radius; y < BMP_HEIGHT - radius; y++) {
+            int sum = 0;
+
+            // Kernel loops also use the radius
+            for (int i = -radius; i <= radius; i++) {
+                for (int j = -radius; j <= radius; j++) {
+                    // Calculate the 1D index for the flattened kernel array
+                    const int kernel_row = i + radius;
+                    const int kernel_col = j + radius;
+                    const int kernel_index = kernel_row * kernel_size + kernel_col;
+
+                    sum += image[x + i][y + j] * kernel[kernel_index];
+                }
+            }
+            output_image[x][y] = (unsigned char)(sum / divisor);
+        }
+    }
+
+    // Copy the processed inner pixels back to the original image
+    for (int x = radius; x < BMP_WIDTH - radius; x++) {
+        for (int y = radius; y < BMP_HEIGHT - radius; y++) {
+            image[x][y] = output_image[x][y];
+        }
+    }
+}
+
+void gaussian_blur_3x3(unsigned char image[BMP_WIDTH][BMP_HEIGHT]) {
+    const int kernel[] = {
+        1, 2, 1,
+        2, 4, 2,
+        1, 2, 1
+    };
+    apply_convolution(image, kernel, 3);
+}
+
+void gaussian_blur_5x5(unsigned char image[BMP_WIDTH][BMP_HEIGHT]) {
+    const int kernel[] = {
+        1,  4,  7,  4, 1,
+        4, 16, 26, 16, 4,
+        7, 26, 41, 26, 7,
+        4, 16, 26, 16, 4,
+        1,  4,  7,  4, 1
+    };
+    apply_convolution(image, kernel, 5);
+}
+
+void sharpen_image(unsigned char image[BMP_WIDTH][BMP_HEIGHT]) {
+    const int kernel[] = {
+        0, -1,  0,
+       -1,  5, -1,
+        0, -1,  0
+   };
+    apply_convolution(image, kernel, 3);
+}
+
 unsigned char otsu_threshold_value(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT]) {
     // Init the histogram
-    unsigned char histogram[256];
+    int histogram[256];
     for (int i = 0; i < 256; ++i) {
         histogram[i] = 0;
     }
@@ -61,10 +141,10 @@ unsigned char otsu_threshold_value(unsigned char input_image[BMP_WIDTH][BMP_HEIG
         for (int value = 0; value < 256; ++value) {
             if (value <= split) {
                 b_sum += histogram[value];
-                mu_b_sum += (histogram[value] * value);
+                mu_b_sum += histogram[value] * value;
             } else {
                 f_sum += histogram[value];
-                mu_f_sum += (histogram[value] * value);
+                mu_f_sum += histogram[value] * value;
             }
         }
 
@@ -85,11 +165,10 @@ unsigned char otsu_threshold_value(unsigned char input_image[BMP_WIDTH][BMP_HEIG
         }
     }
 
-
     return best_split;
 }
 
-void binary_threshold(unsigned char input_image[950][950], const int threshold) {
+void binary_threshold(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], const int threshold) {
     for (int i = 0; i < BMP_WIDTH; i++) {
         for (int j = 0; j < BMP_HEIGHT; j++) {
             if (input_image[i][j] > threshold) {
@@ -97,6 +176,19 @@ void binary_threshold(unsigned char input_image[950][950], const int threshold) 
             } else {
                 input_image[i][j] = 0;
             }
+        }
+    }
+
+    for (int x = 0; x < BMP_WIDTH; ++x) {
+        for (int y = 0; y < BMP_HEIGHT; ++y) {
+            input_image[x][0] = 0;
+            input_image[x][1] = 0;
+            input_image[x][BMP_HEIGHT - 1] = 0;
+            input_image[x][BMP_HEIGHT - 2] = 0;
+            input_image[0][y] = 0;
+            input_image[1][y] = 0;
+            input_image[BMP_WIDTH - 1][y] = 0;
+            input_image[BMP_WIDTH - 2][y] = 0;
         }
     }
 }
@@ -117,7 +209,7 @@ static bool should_pixel_erode(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT],
     return false;
 }
 
-bool erode_image(unsigned char input_image[950][950]) {
+bool erode_image(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT]) {
     unsigned char output_image[BMP_WIDTH][BMP_HEIGHT];
     // Write everything from the input to the output
     memcpy(output_image, input_image, BMP_WIDTH * BMP_HEIGHT);
@@ -191,7 +283,7 @@ void destroy_cell_list(Cell_list* cell_list) {
     free(cell_list);
 }
 
-bool is_exclusion_frame_clear(unsigned char input_image[950][950], const int detection_area_size,
+bool is_exclusion_frame_clear(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], const int detection_area_size,
     const int exclusion_frame_thickness, const int center_x, const int center_y) {
 
     for (int thickness = 0; thickness <= exclusion_frame_thickness; thickness++) {
@@ -248,9 +340,8 @@ static void clear_detection_area(unsigned char image[BMP_WIDTH][BMP_HEIGHT], con
     }
 }
 
-unsigned int detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], const int detection_area_size,
+void detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], const int detection_area_size,
     const int exclusion_frame_thickness, Cell_list *cell_list) {
-    unsigned int counter = 0;
     for (int x = 0; x < BMP_WIDTH; x++) {
         for (int y = 0; y < BMP_HEIGHT; y++) {
             // The exclusion frame must be all black.
@@ -260,7 +351,6 @@ unsigned int detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], cons
                 if (input_image[x][y] || is_detection_area_active(input_image, detection_area_size, x, y)) {
                     // Store its coordinates
                     add_to_cell_list(cell_list, x, y);
-                    counter++;
 
                     // Clear the area to prevent detecting the same cell again
                     clear_detection_area(input_image, detection_area_size, x, y);
@@ -268,11 +358,49 @@ unsigned int detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], cons
             }
         }
     }
-
-    return counter;
 }
 
-void draw_points(unsigned char input_image[950][950][3], Cell_list *cell_list) {
+char check_for_cell(unsigned char inputImage[BMP_WIDTH][BMP_HEIGHT], const int x, const int y) {
+    for (int i = -6; i < 6; ++i) {
+        if (inputImage[x + i][y - 6] || inputImage[x + i][y + 6]) {
+            return false;
+        }
+        if (inputImage[x - 6][y + i] || inputImage[x + 6][y + i]) {
+            return false;
+        }
+    }
+    for (int i = -7; i < 7; ++i) {
+        if (inputImage[x + i][y - 7] || inputImage[x + i][y + 7]) {
+            return false;
+        }
+        if (inputImage[x - 7][y + i] || inputImage[x + 7][y + i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int detect_cells_quick(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], Cell_list *cell_list) {
+    int cellsDetected = 0;
+    for (int x = 0; x < BMP_WIDTH; x++) {
+        for (int y = 0; y < BMP_HEIGHT; y++) {
+            if (input_image[x][y]) {
+                if (check_for_cell(input_image, x ,y) == true) {
+                    cellsDetected++;
+                    add_to_cell_list(cell_list, x, y);
+                    for (int i = -8; i < 8; i++) {
+                        for (int j = -8; j < 8; j++) {
+                            input_image[x + i][y + j] = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return cellsDetected;
+}
+
+void draw_points(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS], Cell_list *cell_list) {
     Cell *current = cell_list->head;
     while (current) {
         const int x = current->x;

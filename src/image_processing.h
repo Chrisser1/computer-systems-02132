@@ -25,6 +25,33 @@ void convert_to_RGB(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT],
     unsigned char output_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS]);
 
 /**
+ * @brief Applies a convolution with a given square kernel to an image.
+ *
+ * @param image The input/output image buffer.
+ * @param kernel A pointer to the kernel, stored as a 1D array.
+ * @param kernel_size The dimension of the kernel (e.g., 3 for 3x3, 5 for 5x5).
+ */
+void apply_convolution(unsigned char image[BMP_WIDTH][BMP_HEIGHT], const int* kernel, int kernel_size);
+
+/**
+ *
+ * @param input_image
+ */
+void gaussian_blur_3x3(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT]);
+
+/**
+ *
+ * @param input_image
+ */
+void gaussian_blur_5x5(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT]);
+
+/**
+ *
+ * @param image
+ */
+void sharpen_image(unsigned char image[BMP_WIDTH][BMP_HEIGHT]);
+
+/**
  *
  * @param input_image
  * @return
@@ -136,8 +163,25 @@ static void clear_detection_area(unsigned char image[BMP_WIDTH][BMP_HEIGHT], int
  * @param cell_list
  * @return
  */
-unsigned int detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT],
+void detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT],
                           int detection_area_size, int exclusion_frame_thickness, Cell_list *cell_list);
+
+/**
+ *
+ * @param inputImage
+ * @param x
+ * @param y
+ * @return
+ */
+char check_for_cell(unsigned char inputImage[BMP_WIDTH][BMP_HEIGHT], int x, int y);
+
+/**
+ *
+ * @param input_image
+ * @param cell_list
+ * @return
+ */
+int detect_cells_quick(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], Cell_list *cell_list);
 
 /**
  *
