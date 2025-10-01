@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     convert_to_RGB(grayscale_image, rgb_image);
     write_bitmap(rgb_image, output_filename);
 
-    const int threshold = otsu_threshold_value(grayscale_image) - 19;
+    const int threshold = otsu_threshold_value(grayscale_image);
     printf("The threshold is %i\n", threshold);
     binary_threshold(grayscale_image, threshold);
 

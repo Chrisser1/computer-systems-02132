@@ -362,18 +362,22 @@ void detect_cells(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], const int de
 
 char check_for_cell(unsigned char inputImage[BMP_WIDTH][BMP_HEIGHT], const int x, const int y) {
     for (int i = -6; i < 6; ++i) {
-        if (inputImage[x + i][y - 6] || inputImage[x + i][y + 6]) {
+        if ((is_valid_coordinate(x + i,y - 6) && inputImage[x + i][y - 6]) ||
+            (is_valid_coordinate(x + i,y + 6) && inputImage[x + i][y + 6])) {
             return false;
         }
-        if (inputImage[x - 6][y + i] || inputImage[x + 6][y + i]) {
+        if ((is_valid_coordinate(x - 6,y + i) && inputImage[x - 6][y + i]) ||
+            (is_valid_coordinate(x + 6,y + i) && inputImage[x + 6][y + i])) {
             return false;
         }
     }
     for (int i = -7; i < 7; ++i) {
-        if (inputImage[x + i][y - 7] || inputImage[x + i][y + 7]) {
+        if ((is_valid_coordinate(x + i,y - 7) && inputImage[x + i][y - 7]) ||
+            (is_valid_coordinate(x + i,y + 7) && inputImage[x + i][y + 7])) {
             return false;
         }
-        if (inputImage[x - 7][y + i] || inputImage[x + 7][y + i]) {
+        if ((is_valid_coordinate(x - 7,y + i) && inputImage[x - 7][y + i]) ||
+            (is_valid_coordinate(x + 7,y + i) && inputImage[x + 7][y + i])) {
             return false;
         }
     }
@@ -390,6 +394,7 @@ int detect_cells_quick(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], Cell_li
                     add_to_cell_list(cell_list, x, y);
                     for (int i = -8; i < 8; i++) {
                         for (int j = -8; j < 8; j++) {
+                            if (!is_valid_coordinate(x+i, y +j)) continue;
                             input_image[x + i][y + j] = 0;
                         }
                     }
