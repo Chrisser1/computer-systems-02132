@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 /**
  * @brief Checks if a given coordinate is within the image boundaries.
@@ -33,6 +34,59 @@ void convert_to_RGB(unsigned char input_image[950][950], unsigned char output_im
             output_image[x][y][2] = input_image[x][y];
         }
     }
+}
+
+unsigned char otsu_threshold_value(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT]) {
+    // Init the histogram
+    unsigned char histogram[256];
+    for (int i = 0; i < 256; ++i) {
+        histogram[i] = 0;
+    }
+    for (int x = 0; x < BMP_WIDTH; ++x) {
+        for (int y = 0; y < BMP_HEIGHT; ++y) {
+            histogram[input_image[x][y]]++;
+        }
+    }
+
+    // Iterate over histogram and add the pixel values
+    double best_otsu = 0;
+    int best_split = 0;
+    const double total_pixels = BMP_WIDTH * BMP_HEIGHT;
+    for (int split = 0; split < 256; ++split) {
+        int b_sum = 0;
+        int mu_b_sum = 0;
+        int f_sum = 0;
+        int mu_f_sum = 0;
+
+        for (int value = 0; value < 256; ++value) {
+            if (value <= split) {
+                b_sum += histogram[value];
+                mu_b_sum += (histogram[value] * value);
+            } else {
+                f_sum += histogram[value];
+                mu_f_sum += (histogram[value] * value);
+            }
+        }
+
+        const double W_b = (double)b_sum / total_pixels;
+        const double W_f = (double)f_sum / total_pixels;
+
+        if (b_sum == 0 || f_sum == 0) {
+            continue;
+        }
+        const double mu_b = mu_b_sum / b_sum;;
+        const double mu_f = mu_f_sum / f_sum;
+
+        const double otsu = W_b * W_f * ((mu_b - mu_f) * (mu_b - mu_f));
+
+        if (best_otsu < otsu) {
+            best_otsu = otsu;
+            best_split = split;
+        }
+    }
+
+
+    return best_split;
 }
 
 void binary_threshold(unsigned char input_image[950][950], const int threshold) {

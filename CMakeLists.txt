@@ -4,7 +4,7 @@ project(cell-detection C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_compile_options(-Wall -Wextra -g -O3 -march=native)
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 find_package(Threads REQUIRED)
 
@@ -24,6 +24,7 @@ target_include_directories(cell-detection PRIVATE
 
 target_link_libraries(cell-detection PRIVATE
         Threads::Threads
+        m
 )
 
 # Place the final "server" executable in the project's root directory

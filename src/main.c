@@ -18,7 +18,6 @@
 
 unsigned char rgb_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS];
 unsigned char grayscale_image[BMP_WIDTH][BMP_HEIGHT];
-unsigned char final_image[BMP_WIDTH][BMP_HEIGHT][BMP_CHANNELS];
 clock_t start, end;
 double cpu_time_used;
 
@@ -39,7 +38,10 @@ int main(int argc, char** argv) {
 
     start = clock();
     convert_to_grayscale(rgb_image, grayscale_image);
-    binary_threshold(grayscale_image, 90);
+    const int threshold = otsu_threshold_value(grayscale_image);
+    binary_threshold(grayscale_image, threshold);
+    convert_to_RGB(grayscale_image, rgb_image);
+    write_bitmap(rgb_image, argv[2]);
 
     unsigned int counter = 0;
     Cell_list* cell_list = create_cell_list();

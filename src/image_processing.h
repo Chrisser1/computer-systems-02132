@@ -27,6 +27,13 @@ void convert_to_RGB(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT],
 /**
  *
  * @param input_image
+ * @return
+ */
+unsigned char otsu_threshold_value(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT]);
+
+/**
+ *
+ * @param input_image
  * @param threshold
  */
 void binary_threshold(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], int threshold);
