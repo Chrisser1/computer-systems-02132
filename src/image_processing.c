@@ -247,7 +247,7 @@ void add_to_cell_list(Cell_list *list, const int x, const int y) {
         return;
     }
 
-    Cell* new_cell = (Cell*)malloc(sizeof(Cell));
+    Cell* new_cell = malloc(sizeof(Cell));
     if (new_cell == NULL) {
         fprintf(stderr, "Error: Could not allocate memory for a new cell.\n");
         return;
