@@ -1,12 +1,3 @@
-/**
-* @file main.c
- * @brief Main file for the cell detection program.
- *
- * This file contains the main function that drives the cell detection algorithm.
- * It handles command-line arguments for input and output image paths,
- * calls the various image processing steps, and prints the final results.
- */
-
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
