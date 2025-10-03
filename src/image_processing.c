@@ -310,7 +310,6 @@ bool is_exclusion_frame_clear(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], 
 
 static bool is_detection_area_active(unsigned char image[BMP_WIDTH][BMP_HEIGHT], const int detection_area_size,
     const int center_x, const int center_y) {
-    assert(detection_area_size % 2 == 0); // Dete
     const int half_size = detection_area_size / 2;
 
     for (int i = -half_size; i < half_size; i++) {
@@ -327,7 +326,6 @@ static bool is_detection_area_active(unsigned char image[BMP_WIDTH][BMP_HEIGHT],
 
 static void clear_detection_area(unsigned char image[BMP_WIDTH][BMP_HEIGHT], const int detection_area_size,
     const int center_x, const int center_y) {
-    assert(detection_area_size % 2 == 0); // Must be a multiple of two
     const int half_size = detection_area_size / 2;
     for (int i = -half_size; i < half_size; i++) {
         for (int j = -half_size; j < half_size; j++) {
