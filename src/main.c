@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
 
     gaussian_blur_5x5(grayscale_image);
     gaussian_blur_5x5(grayscale_image);
+    gaussian_blur_5x5(grayscale_image);
     construct_output_path(output_filename, FILENAME_BUFFER_SIZE, argv[2], "_gaussian");
     convert_to_RGB(grayscale_image, rgb_image);
     write_bitmap(rgb_image, output_filename);

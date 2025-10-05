@@ -7,6 +7,10 @@
 #include <string.h>
 #include <math.h>
 
+#ifndef BORDER
+#define BORDER 1
+#endif
+
 /**
  * @brief Checks if a given coordinate is within the image boundaries.
  * @return True if the coordinate is valid, false otherwise.
@@ -169,26 +173,29 @@ unsigned char otsu_threshold_value(unsigned char input_image[BMP_WIDTH][BMP_HEIG
 }
 
 void binary_threshold(unsigned char input_image[BMP_WIDTH][BMP_HEIGHT], const int threshold) {
-    for (int i = 0; i < BMP_WIDTH; i++) {
-        for (int j = 0; j < BMP_HEIGHT; j++) {
-            if (input_image[i][j] > threshold) {
-                input_image[i][j] = 255;
-            } else {
-                input_image[i][j] = 0;
-            }
+    for (int x = 0; x < BMP_WIDTH; ++x) {
+        for (int y = 0; y < BMP_HEIGHT; ++y) {
+            input_image[x][y] = (input_image[x][y] > threshold) ? 255 : 0;
         }
     }
 
-    for (int x = 0; x < BMP_WIDTH; ++x) {
+    if (BORDER > 0) {
+        const int bw = (BORDER < BMP_WIDTH)  ? BORDER : BMP_WIDTH;
+        const int bh = (BORDER < BMP_HEIGHT) ? BORDER : BMP_HEIGHT;
+
+        // top & bottom rows
+        for (int x = 0; x < BMP_WIDTH; ++x) {
+            for (int y = 0; y < bh; ++y) {
+                input_image[x][y] = 0;
+                input_image[x][BMP_HEIGHT - 1 - y] = 0;
+            }
+        }
+        // left & right columns
         for (int y = 0; y < BMP_HEIGHT; ++y) {
-            input_image[x][0] = 0;
-            input_image[x][1] = 0;
-            input_image[x][BMP_HEIGHT - 1] = 0;
-            input_image[x][BMP_HEIGHT - 2] = 0;
-            input_image[0][y] = 0;
-            input_image[1][y] = 0;
-            input_image[BMP_WIDTH - 1][y] = 0;
-            input_image[BMP_WIDTH - 2][y] = 0;
+            for (int x = 0; x < bw; ++x) {
+                input_image[x][y] = 0;
+                input_image[BMP_WIDTH - 1 - x][y] = 0;
+            }
         }
     }
 }
