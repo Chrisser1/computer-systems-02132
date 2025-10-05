@@ -46,9 +46,12 @@ int main(int argc, char** argv) {
 
     char output_filename[FILENAME_BUFFER_SIZE];
 
-    gaussian_blur_5x5(grayscale_image);
-    gaussian_blur_5x5(grayscale_image);
-    gaussian_blur_5x5(grayscale_image);
+    //gaussian_blur_5x5(grayscale_image);
+    //gaussian_blur_5x5(grayscale_image);
+    //gaussian_blur_5x5(grayscale_image);
+    gaussian_blur_3x3(grayscale_image);
+    gaussian_blur_3x3(grayscale_image);
+
     construct_output_path(output_filename, FILENAME_BUFFER_SIZE, argv[2], "_gaussian");
     convert_to_RGB(grayscale_image, rgb_image);
     write_bitmap(rgb_image, output_filename);
@@ -64,7 +67,7 @@ int main(int argc, char** argv) {
     Cell_list* cell_list = create_cell_list();
     int i = 0;
     while (erode_image(grayscale_image)) {
-        // detect_cells(grayscale_image, 12, 1, cell_list);
+        //detect_cells(grayscale_image, 12, 1, cell_list);
         detect_cells_quick(grayscale_image, cell_list);
         convert_to_RGB(grayscale_image, rgb_image);
 
